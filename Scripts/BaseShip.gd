@@ -1,32 +1,84 @@
+extends KinematicBody2D
 
-extends Sprite
-
-# member variables here, example:
-# var a=2
-# var b="textvar"
+var movement = Vector2(0, 0)
+var turnDirection = 0
+var speed = 0.0
+var currentDirection = 0.0
+var turnSpeed = 0
 
 func _ready():
-	# Called every time the node is added to the scene.
-	# Initialization here
-	self.set_process(true)
-	pass
+	self.set_process(true)	
+	turnDirection = atan2(movement.x, movement.y)
 	
 func _process(delta):
-	var pos = self.get_pos()
-	var rot = self.get_rot()
-	
 	if(Input.is_key_pressed(KEY_UP)):
-		pos.y -= 10
-		rot = 0
+		if(speed < 10):
+			accelerate(1.01)
 	if(Input.is_key_pressed(KEY_DOWN)):
-		pos.y += 10
-		rot = deg2rad(180)
+		accelerate(0.9)
+		print(movement)
 	if(Input.is_key_pressed(KEY_RIGHT)):
-		pos.x += 10
-		rot = deg2rad(270)
+		if(turnSpeed > -3):
+		#turn(deg2rad(1)		
+			turnSpeed -= .1
+			
 	if(Input.is_key_pressed(KEY_LEFT)):
-		pos.x -= 10
-		rot = deg2rad(90)
+		if(turnSpeed < 3):
+			turnSpeed += .1
+		#turn(deg2rad(-1)	
 		
-	self.set_pos(pos)
-	self.set_rot(rot)
+	if(turnSpeed != 0):
+		if(turnDirection > currentDirection):
+			turn(deg2rad(turnSpeed))
+			self.set_rot(currentDirection + deg2rad(turnSpeed))
+			turnSpeed -= .1
+			
+		if(turnDirection < currentDirection):
+			turn(deg2rad(turnSpeed))
+			self.set_rot(currentDirection + deg2rad(turnSpeed))
+			turnSpeed += .1
+		#turn(deg2rad(turnSpeed))
+	#turn - 1 * delta		
+	
+	speed = movement.length()	
+	self.move(movement);
+	
+	var cur_pos = self.get_pos()
+
+	if(cur_pos.x > self.get_viewport_rect().size.width + self.get_item_rect().size.width/2):
+      cur_pos.x = -self.get_item_rect().size.width/2
+	if(cur_pos.x + self.get_item_rect().size.width*4 <= 0):
+		cur_pos.x = self.get_viewport_rect().size.width - self.get_item_rect().size.width/2
+	if(cur_pos.y > self.get_viewport_rect().size.height + self.get_item_rect().size.height/2):
+      cur_pos.y = -self.get_item_rect().size.height/2
+	if(cur_pos.y + self.get_item_rect().size.height*4 <= 0):
+		cur_pos.y = self.get_viewport_rect().size.height - self.get_item_rect().size.height
+
+	self.set_pos(cur_pos)
+	
+func accelerate(factor):	 
+	currentDirection = atan2(movement.x, movement.y)
+	var cosAngle = cos(currentDirection)
+	var sinAngle = sin(currentDirection)
+	
+	var x = movement.length() * factor
+	var y = movement.length() * factor
+	
+	
+	if(movement.length() > 0.15):
+		movement.x = (x) * sinAngle
+		movement.y = (y) * cosAngle
+	else:
+		if(factor < 1):			
+			movement.x = 0.0
+			movement.y = 0.0
+		else:
+			movement.x = cosAngle * 2
+			movement.y = sinAngle * 2
+		
+func turn(degrees):
+	currentDirection = atan2(movement.x, movement.y) + degrees
+	var cosAngle = cos(currentDirection)
+	var sinAngle = sin(currentDirection)
+	movement.x = sinAngle * movement.length()
+	movement.y = cosAngle * movement.length()
